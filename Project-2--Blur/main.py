@@ -13,7 +13,7 @@ import cv2
 #===============================================================================
 
 INPUT_IMAGE =  'chave.bmp'
-TAMANHO_JANELA = -1, 10
+TAMANHO_JANELA = -2, 2
 
 
 
@@ -67,10 +67,13 @@ def main ():
 
     start_time = timeit.default_timer ()
     img_out = blur_ingenuo (img)
+    img_out2 = cv2.blur (img, (4, 4))
     print ('Tempo: %f' % (timeit.default_timer () - start_time))
 
     cv2.imshow ('02 - out', img_out)
     cv2.imwrite ('02 - out.png', img_out*255)
+    cv2.imshow ('03 - openCV-out', img_out2)
+    cv2.imwrite ('03 - openCV-out.png', img_out2*255)
     cv2.waitKey ()
     cv2.destroyAllWindows ()
 
