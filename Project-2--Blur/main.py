@@ -13,7 +13,7 @@ import cv2
 #===============================================================================
 
 INPUT_IMAGE =  'chave.bmp'
-TAMANHO_JANELA = -2, 2
+TAMANHO_JANELA = -10, 10
 
 
 
@@ -22,7 +22,7 @@ TAMANHO_JANELA = -2, 2
 def esta_dentro_da_imagem (tamanho_imagem, y, x):
     return y >= 0 and y < tamanho_imagem[0] and x >= 0 and x < tamanho_imagem[1]
 
-def calculo_janela (img, y, x):
+def calculo_janela_ingenuo (img, y, x):
     soma = 0
     num_pixels_janela = 0
     for janela_y in range(TAMANHO_JANELA[0], TAMANHO_JANELA[1]):
@@ -32,6 +32,26 @@ def calculo_janela (img, y, x):
                 num_pixels_janela += 1
     return soma / num_pixels_janela
 
+
+def calculo_janela_separavel_y (img, y, x):
+    soma = 0
+    num_pixels_janela = 0
+    for janela_y in range(TAMANHO_JANELA[0], TAMANHO_JANELA[1]):
+        if esta_dentro_da_imagem(img.shape, y + janela_y, x):
+            soma += img [y + janela_y, x]
+            num_pixels_janela += 1
+    return soma / num_pixels_janela
+
+def calculo_janela_separavel_x (img, y, x):
+    soma = 0
+    num_pixels_janela = 0
+    for janela_x in range(TAMANHO_JANELA[0], TAMANHO_JANELA[1]):
+        if esta_dentro_da_imagem(img.shape, y, x + janela_x):
+            soma += img [y, x + janela_x]
+            num_pixels_janela += 1
+    return soma / num_pixels_janela
+
+
 def blur_ingenuo (img):
     img_out = np.zeros_like (img)
     size_y = img.shape[0]
@@ -39,8 +59,23 @@ def blur_ingenuo (img):
 
     for y in range (size_y):
         for x in range (size_x):
-            img_out [y, x] = calculo_janela (img, y, x)
+            img_out [y, x] = calculo_janela_ingenuo (img, y, x)
     return img_out
+
+def blur_separavel (img):
+    img_out = np.zeros_like (img)
+    size_y = img.shape[0]
+    size_x = img.shape[1]
+
+    for y in range (size_y):
+        for x in range (size_x):
+            img_out [y, x] = calculo_janela_separavel_y (img, y, x)
+
+    img_out_final = np.zeros_like (img_out)
+    for y in range (size_y):
+        for x in range (size_x):
+            img_out_final[y, x] = calculo_janela_separavel_x (img_out, y, x)
+    return img_out_final
 
 #===============================================================================
 
@@ -66,8 +101,8 @@ def main ():
     # cv2.imwrite ('01 - original.png', img*255)
 
     start_time = timeit.default_timer ()
-    img_out = blur_ingenuo (img)
-    img_out2 = cv2.blur (img, (4, 4))
+    img_out = blur_separavel (img)
+    img_out2 = cv2.blur (img, (20, 20))
     print ('Tempo: %f' % (timeit.default_timer () - start_time))
 
     cv2.imshow ('02 - out', img_out)
