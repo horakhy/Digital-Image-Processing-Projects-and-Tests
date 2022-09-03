@@ -1,5 +1,5 @@
 #===============================================================================
-# Exemplo: segmentação de uma imagem em escala de cinza.
+# Exemplo: blur de uma imagem.
 #-------------------------------------------------------------------------------
 # Autor: Bogdan T. Nassu
 # Universidade Tecnológica Federal do Paraná
@@ -33,6 +33,16 @@ def calculo_janela_ingenuo (img, y, x):
     return soma / num_pixels_janela
 
 
+def blur_ingenuo (img):
+    img_out = np.zeros_like (img)
+    size_y = img.shape[0]
+    size_x = img.shape[1]
+
+    for y in range (size_y):
+        for x in range (size_x):
+            img_out [y, x] = calculo_janela_ingenuo (img, y, x)
+    return img_out
+
 def calculo_janela_separavel_y (img, y, x):
     soma = 0
     num_pixels_janela = 0
@@ -51,17 +61,6 @@ def calculo_janela_separavel_x (img, y, x):
             num_pixels_janela += 1
     return soma / num_pixels_janela
 
-
-def blur_ingenuo (img):
-    img_out = np.zeros_like (img)
-    size_y = img.shape[0]
-    size_x = img.shape[1]
-
-    for y in range (size_y):
-        for x in range (size_x):
-            img_out [y, x] = calculo_janela_ingenuo (img, y, x)
-    return img_out
-
 def blur_separavel (img):
     img_out = np.zeros_like (img)
     size_y = img.shape[0]
@@ -76,6 +75,36 @@ def blur_separavel (img):
         for x in range (size_x):
             img_out_final[y, x] = calculo_janela_separavel_x (img_out, y, x)
     return img_out_final
+
+def cria_integral_da_imagem (img):
+    img_integral = np.zeros_like (img)
+    size_y = img.shape[0]
+    size_x = img.shape[1]
+
+    for y in range (size_y):
+        for x in range (size_x):
+            for (x, y) in ((x, y), (x, y-1), (x-1, y), (x-1, y-1)):
+                if esta_dentro_da_imagem(img_integral.shape, y, x):
+                    img_integral [y, x] += img [y, x]
+    return img_integral
+
+def blur_imagem_integral (img):
+    img_out = np.zeros_like (img)
+    size_y = img.shape[0]
+    size_x = img.shape[1]
+
+    img_integral = cria_integral_da_imagem(img)
+
+    for y in range (size_y):
+        for x in range (size_x):
+            soma = 0
+            num_pixels_janela = 0
+            for janela_y, janela_x in [(y, x), (TAMANHO_JANELA[0], x), (y, TAMANHO_JANELA[1]), (TAMANHO_JANELA[0], TAMANHO_JANELA[1])]:
+                if esta_dentro_da_imagem(img_integral.shape, y + janela_y, x + janela_x):
+                    soma += img_integral [y + janela_y, x + janela_x]
+                    num_pixels_janela += 1
+            img_out [y, x] = soma / num_pixels_janela
+    return img_out
 
 #===============================================================================
 
@@ -101,7 +130,7 @@ def main ():
     # cv2.imwrite ('01 - original.png', img*255)
 
     start_time = timeit.default_timer ()
-    img_out = blur_separavel (img)
+    img_out = blur_imagem_integral (img)
     img_out2 = cv2.blur (img, (20, 20))
     print ('Tempo: %f' % (timeit.default_timer () - start_time))
 
