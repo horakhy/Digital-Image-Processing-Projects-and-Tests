@@ -118,6 +118,8 @@ def atribui_valores_componente(componente, x, y):
 def esta_dentro_da_imagem(img, x, y):
     return x < img.shape[1] and y < img.shape[0] and x >= 0 and y >= 0
 
+def vizinhos(x, y):
+    return [ (x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1) ]
 
 def inunda(img, x, y, label, componente):
 
@@ -125,7 +127,7 @@ def inunda(img, x, y, label, componente):
 
     atribui_valores_componente(componente, x, y)
 
-    for (x, y) in [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]:
+    for (x, y) in vizinhos(x, y):
         if esta_dentro_da_imagem(img, x, y) and img[y][x] == 1:
             inunda(img, x, y, label, componente)
 
