@@ -101,6 +101,32 @@ def cria_integral_da_imagem (img):
     
     return img_integral
 
+def get_vertices_janela_integral (img_integral, y, x):
+    janela_x0 = max (0, x + TAMANHO_JANELA[0])
+    janela_x1 = min (img_integral.shape[1] - 1, x + TAMANHO_JANELA[1])
+    janela_y0 = max (0, y + TAMANHO_JANELA[0])
+    janela_y1 = min (img_integral.shape[0] - 1, y + TAMANHO_JANELA[1])
+
+    return janela_x0, janela_x1, janela_y0, janela_y1
+
+def soma_valores_img_integral (img_integral, y, x, z):
+    janela_x0, janela_x1, janela_y0, janela_y1 = get_vertices_janela_integral (img_integral, y, x)
+
+    soma = img_integral[janela_y1, janela_x1, z]
+
+    if janela_x0 > 0:
+        soma -= img_integral[janela_y1, janela_x0 - 1, z]
+
+    if janela_y0 > 0:
+        soma -= img_integral[janela_y0 - 1, janela_x1, z]
+
+    if janela_x0 > 0 and janela_y0 > 0:
+        soma += img_integral[janela_y0 - 1, janela_x0 - 1, z]
+    
+    num_pixels_janela = (janela_x1 - janela_x0 + 1) * (janela_y1 - janela_y0 + 1)
+
+    return soma, num_pixels_janela
+
 def blur_imagem_integral (img):
     img_out = np.zeros_like (img)
     size_y = img.shape[0]
@@ -109,28 +135,12 @@ def blur_imagem_integral (img):
 
     img_integral = cria_integral_da_imagem(img)
 
-    # blur da imagem com imagem integral
-
     for z in range (channels):
         for y in range (size_y):
             for x in range (size_x):
-                janela_x0 = max (0, x + TAMANHO_JANELA[0])
-                janela_x1 = min (size_x - 1, x + TAMANHO_JANELA[1])
-                janela_y0 = max (0, y + TAMANHO_JANELA[0])
-                janela_y1 = min (size_y - 1, y + TAMANHO_JANELA[1])
+                
+                soma, num_pixels_janela = soma_valores_img_integral(img_integral, y, x, z)
 
-                soma = img_integral[janela_y1, janela_x1, z]
-                
-                if janela_x0 > 0:
-                    soma -= img_integral[janela_y1, janela_x0 - 1, z]
-                    
-                if janela_y0 > 0:
-                    soma -= img_integral[janela_y0 - 1, janela_x1, z]
-                
-                if janela_x0 > 0 and janela_y0 > 0:
-                    soma += img_integral[janela_y0 - 1, janela_x0 - 1, z]
-                
-                num_pixels_janela = (janela_x1 - janela_x0 + 1) * (janela_y1 - janela_y0 + 1)
                 img_out[y, x, z] = soma / num_pixels_janela
     
     return img_out
@@ -159,7 +169,7 @@ def main ():
     # cv2.imwrite ('01 - original.png', img*255)
 
     start_time = timeit.default_timer ()
-    img_out = blur_imagem_integral (img)
+    img_out = blur_separavel (img)
     img_out2 = cv2.blur (img, (20, 20))
 
     # compara duas imagens
@@ -169,9 +179,11 @@ def main ():
 
     cv2.imshow ('02 - out', img_out)
     cv2.imwrite ('02 - out.png', img_out*255)
+
     cv2.imshow ('03 - openCV-out', img_out2)
     cv2.imwrite ('03 - openCV-out.png', img_out2*255)
 
+    # Imagem deve ficar preta, pois a diferença entre as imagens é NULA
     cv2.imshow ('04 - Resultado', img_out_3)
     cv2.imwrite ('04 - Resultado.png', img_out_3*255)
     
