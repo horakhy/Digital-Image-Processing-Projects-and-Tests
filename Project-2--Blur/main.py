@@ -9,12 +9,11 @@ import sys
 import timeit
 import numpy as np
 import cv2
-import collections
 
 #===============================================================================
 
-INPUT_IMAGE =  'chave.bmp'
-TAMANHO_JANELA = -40, 40
+INPUT_IMAGE =  'flowers.bmp'
+TAMANHO_JANELA = -10, 10
 
 
 
@@ -92,13 +91,13 @@ def cria_integral_da_imagem (img):
     
     for z in range (channels):
         for y in range (size_y):
-            img_integral[y,0, z] = img[y,0, z]
+            img_integral[y, 0, z] = img[y,0, z]
             for x in range (1, size_x):
-                img_integral[y,x, z] = img[y,x, z] + img_integral[y,x-1, z]
+                img_integral[y, x, z] = img[y,x, z] + img_integral[y,x-1, z]
           
         for y in range (1, size_y):
             for x in range (size_x):
-                img_integral[y,x, z] += img_integral[y-1,x, z]
+                img_integral[y, x, z] += img_integral[y-1,x, z]
     
     return img_integral
 
@@ -110,29 +109,30 @@ def blur_imagem_integral (img):
 
     img_integral = cria_integral_da_imagem(img)
 
-    for z in range (channels):
-        janela = TAMANHO_JANELA[1]
-        for y in range (int(size_y)):
-            sum=0
-            for x in range (int(size_x)):
-                if(TAMANHO_JANELA[1] > x or TAMANHO_JANELA[1] > y):
-                    janela = x if x < y else y
-                    if((not(esta_dentro_da_imagem(img.shape, y+janela, x))) and y+janela > x+janela):
-                        sum+=1
-                        janela-=sum
-                    elif((not(esta_dentro_da_imagem(img.shape, y, x+janela))) and x+janela > y+janela):
-                        sum+=1
-                        janela-=sum
-                else:
-                    if((not(esta_dentro_da_imagem(img.shape, y+janela, x))) and y+janela > x+janela):
-                        janela-=1
-                    elif((not(esta_dentro_da_imagem(img.shape, y, x+janela))) and x+janela > y+janela):
-                        janela-=1
-                if(janela!=0): 
-                    img_out[y][x][z] = (img_integral[y+janela][x+janela][z] - img_integral[y-janela][x+janela][z] - img_integral[y+janela][x-janela][z] + img_integral[y-janela][x-janela][z])/(janela*janela*4)
-                else:
-                    img_out[y][x][z] = img[y][x][z]
+    # blur da imagem com imagem integral
 
+    for z in range (channels):
+        for y in range (size_y):
+            for x in range (size_x):
+                janela_x0 = max (0, x + TAMANHO_JANELA[0])
+                janela_x1 = min (size_x - 1, x + TAMANHO_JANELA[1])
+                janela_y0 = max (0, y + TAMANHO_JANELA[0])
+                janela_y1 = min (size_y - 1, y + TAMANHO_JANELA[1])
+
+                soma = img_integral[janela_y1, janela_x1, z]
+                
+                if janela_x0 > 0:
+                    soma -= img_integral[janela_y1, janela_x0 - 1, z]
+                    
+                if janela_y0 > 0:
+                    soma -= img_integral[janela_y0 - 1, janela_x1, z]
+                
+                if janela_x0 > 0 and janela_y0 > 0:
+                    soma += img_integral[janela_y0 - 1, janela_x0 - 1, z]
+                
+                num_pixels_janela = (janela_x1 - janela_x0 + 1) * (janela_y1 - janela_y0 + 1)
+                img_out[y, x, z] = soma / num_pixels_janela
+    
     return img_out
 
 #===============================================================================
@@ -160,13 +160,21 @@ def main ():
 
     start_time = timeit.default_timer ()
     img_out = blur_imagem_integral (img)
-    img_out2 = cv2.blur (img, (80, 80))
+    img_out2 = cv2.blur (img, (20, 20))
+
+    # compara duas imagens
+    img_out_3 = np.abs (img_out - img_out2)
+
     print ('Tempo: %f' % (timeit.default_timer () - start_time))
 
     cv2.imshow ('02 - out', img_out)
     cv2.imwrite ('02 - out.png', img_out*255)
     cv2.imshow ('03 - openCV-out', img_out2)
     cv2.imwrite ('03 - openCV-out.png', img_out2*255)
+
+    cv2.imshow ('04 - Resultado', img_out_3)
+    cv2.imwrite ('04 - Resultado.png', img_out_3*255)
+    
     cv2.waitKey ()
     cv2.destroyAllWindows ()
 
