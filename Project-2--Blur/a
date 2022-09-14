@@ -1,4 +1,0 @@
-            if((not(esta_dentro_da_imagem(img.shape, y+janela, x)) or not(esta_dentro_da_imagem(img.shape, y+janela, x))) and y+janela < x+janela):
-                janela=y+janela
-            if((not(esta_dentro_da_imagem(img.shape, y+janela, x)) or not(esta_dentro_da_imagem(img.shape, y+janela, x))) and y+janela > x+janela):
-                janela=x+janela
