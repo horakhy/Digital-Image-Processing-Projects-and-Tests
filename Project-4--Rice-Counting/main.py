@@ -1,16 +1,15 @@
 import cv2
 import sys
 import numpy as np
-import math
 
-path = '150.bmp'
+path = '524.png'
 
 def processing(img):
  img_out = img.copy()
- kernel = np.ones((3,3),np.uint8)
+ kernel = np.ones((5,5),np.uint8)
 
  img_out = cv2.adaptiveThreshold(img_out,255,cv2.ADAPTIVE_THRESH_MEAN_C,
-            cv2.THRESH_BINARY,25,-20)  
+            cv2.THRESH_BINARY,19,-22)  
  cv2.imwrite ('01 - Adaptative_Threshold.png', img_out)
 
  img_out  = cv2.morphologyEx(img_out,cv2.MORPH_OPEN,kernel,iterations=1) 
@@ -37,6 +36,8 @@ for x in range(len(cnts)):
 listAreaSorted = sorted(listArea)
 print('lista de areas:', listAreaSorted)
 print('area total: ', totalArea)
+
+
 finalList = []
 somaMenores = listAreaSorted[0] 
 for x in range(len(listAreaSorted)):
@@ -48,36 +49,30 @@ for x in range(len(listAreaSorted)):
 somaListaFinal = 0.0
 for x in range(len(finalList)):
         somaListaFinal+= finalList[x]
-
-somaMaiores = finalList[len(finalList)-1] 
-for x, item in reversed(list(enumerate(finalList))):
-        if somaMaiores < totalArea*(0.02):
-                somaMaiores+=finalList[x]
-                continue
-        finalList = finalList[0:x]
-        break
         
-# somaListaFinal = 0.0
-# for x in range(len(finalList)):
-
-#         somaListaFinal+= finalList[x]
+somaListaFinal = 0.0
+for x in range(len(finalList)):
+        somaListaFinal+= finalList[x]
+print('Soma final:', somaListaFinal)
 
 print('lista de areas final:', finalList)
 
-mean = (totalArea-(somaMenores+somaMaiores)) / len(finalList)
-cont = 0.0
+mean = (totalArea-(somaMenores)) / len(finalList)
+print('media:', mean)
+
+rices = 0.0
 for x in range(len(finalList)):
         if(finalList[x] < mean*0.2):
                 continue
         if(finalList[x] > mean):
-                cont+=round(finalList[x]/mean) 
+                rices+=round(finalList[x]/mean) 
                 continue
-        cont+=1
+        rices+=1
+# if(rices*mean - somaListaFinal > 0):
+#         rices+= (rices*mean - somaListaFinal)/mean
 
-rices = cont
-
-cv2.drawContours(rgb, cnts, -1, (0,0,255), 2)
+cv2.drawContours(rgb, cnts, -1, (0,0,255), 1)
 cv2.imwrite ('03 - Draw.png', rgb)
-rices = math.ceil(rices)
+rices = round(rices)
 print('Rice in the image: ', rices)
 #cv2.show()
